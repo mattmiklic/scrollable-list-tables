@@ -6,7 +6,7 @@ Legacy admin tables can squeeze titles into very narrow columns when plugins add
 
 ## Install
 
-1. Download **scrollable-list-tables-0.1.4.zip** from the [0.1.4 release](https://github.com/mattmiklic/scrollable-list-tables/releases/tag/v0.1.4).
+1. Download **scrollable-list-tables-0.1.5.zip** from the [0.1.5 release](https://github.com/mattmiklic/scrollable-list-tables/releases/tag/v0.1.5).
 2. In WordPress, go to **Plugins → Add Plugin → Upload Plugin**.
 3. Upload the ZIP, install it, and activate **Scrollable List Tables**.
 
@@ -49,11 +49,13 @@ node --check assets/list-tables.js
 npm run build
 ```
 
-The build writes `dist/scrollable-list-tables-0.1.4.zip`. Only the main PHP file, two assets, WordPress readme, and license enter the ZIP. Development dependencies and tests are not bundled.
+The build writes `dist/scrollable-list-tables-0.1.5.zip`. Only the main PHP file, two assets, WordPress readme, and license enter the ZIP. Development dependencies and tests are not bundled.
 
 The plugin reuses an existing `wp-list-table-scroll` wrapper when running alongside the Core prototype. Deactivating it does not undo a separate Core patch.
 
 ## Validation
+
+Version 0.1.5 uses WordPress's RTL page class for shadow direction. All nine DOM regression tests and PHP syntax checks pass. Source review confirms the Core and plugin shadow rules match and the generated Core RTL styles mirror the shadows once. Browser checks remain pending.
 
 Version 0.1.4 passes the nine DOM regression tests, including both edge states in left-to-right and right-to-left layouts, fractional boundaries, overscroll, fitting tables with stale scroll offsets, resizing, and cleanup of both shadow classes. Browser checks of the two shadows and native rubber-band/back-forward gestures remain pending.
 
