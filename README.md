@@ -6,7 +6,7 @@ Legacy admin tables can squeeze titles into very narrow columns when plugins add
 
 ## Install
 
-1. Download **scrollable-list-tables-0.1.3.zip** from the [0.1.3 release](https://github.com/mattmiklic/scrollable-list-tables/releases/tag/v0.1.3).
+1. Download **scrollable-list-tables-0.1.4.zip** from the [0.1.4 release](https://github.com/mattmiklic/scrollable-list-tables/releases/tag/v0.1.4).
 2. In WordPress, go to **Plugins → Add Plugin → Upload Plugin**.
 3. Upload the ZIP, install it, and activate **Scrollable List Tables**.
 
@@ -16,11 +16,12 @@ There are no settings. Deactivate the plugin and reload the page to compare the 
 
 - Above 782 CSS pixels, Core text columns have minimum widths and the table scrolls horizontally when needed.
 - The outer border stays around the scrolling viewport. Filters, bulk actions, and pagination stay outside it.
-- An edge shadow indicates more columns are available in the reading direction. It disappears at the end or when the table fits, including in right-to-left layouts.
+- Edge shadows indicate hidden columns on either side. Each shadow disappears when its edge is reached, and both disappear when the table fits, including in right-to-left layouts.
+- Desktop tables suppress horizontal rubber-band overscroll where supported.
 - The table region supports keyboard scrolling with the arrow keys.
 - WordPress keeps its existing mobile layout and expandable row details at 782 pixels and below.
 
-Native JavaScript scroll and resize handling controls shadow visibility, and CSS handles its appearance. Browsers without `ResizeObserver` retain the same horizontal scrolling without the shadow.
+Native JavaScript scroll and resize handling controls shadow visibility, and CSS handles its appearance. Browsers without `ResizeObserver` retain the same horizontal scrolling without the shadows. Overscroll containment also prevents browser back/forward gestures where supported; Safari may still allow navigation gestures.
 
 The plugin targets Core list screens, including Posts and custom post types, Pages, Media list view, Comments, Users, Categories and Tags, Installed Plugins, and corresponding network tables. Custom plugin administration pages are outside this initial scope.
 
@@ -48,11 +49,13 @@ node --check assets/list-tables.js
 npm run build
 ```
 
-The build writes `dist/scrollable-list-tables-0.1.3.zip`. Only the main PHP file, two assets, WordPress readme, and license enter the ZIP. Development dependencies and tests are not bundled.
+The build writes `dist/scrollable-list-tables-0.1.4.zip`. Only the main PHP file, two assets, WordPress readme, and license enter the ZIP. Development dependencies and tests are not bundled.
 
 The plugin reuses an existing `wp-list-table-scroll` wrapper when running alongside the Core prototype. Deactivating it does not undo a separate Core patch.
 
 ## Validation
+
+Version 0.1.4 passes the nine DOM regression tests, including both edge states in left-to-right and right-to-left layouts, fractional boundaries, overscroll, fitting tables with stale scroll offsets, resizing, and cleanup of both shadow classes. Browser checks of the two shadows and native rubber-band/back-forward gestures remain pending.
 
 Version 0.1.3 passes the DOM regression tests for shadow visibility in left-to-right and right-to-left layouts, fractional scroll positions and overscroll, viewport and table resizing, and observer cleanup and reinitialization after AJAX table replacement. Browser checks of 0.1.3 remain pending.
 

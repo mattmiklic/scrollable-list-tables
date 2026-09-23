@@ -17,10 +17,12 @@
 			function update() {
 				const isRTL = window.getComputedStyle( wrapper ).direction === 'rtl';
 				const scrollLeft = isRTL ? -wrapper.scrollLeft : wrapper.scrollLeft;
-				const remaining = wrapper.scrollWidth - wrapper.clientWidth - Math.max( 0, scrollLeft );
+				const maxScroll = Math.max( 0, wrapper.scrollWidth - wrapper.clientWidth );
+				const position = Math.min( maxScroll, Math.max( 0, scrollLeft ) );
 
-				// Allow for fractional scroll positions at the end of the table.
-				wrapper.classList.toggle( 'has-scroll-overflow', remaining > 1 );
+				// Allow for fractional scroll positions at either end of the table.
+				wrapper.classList.toggle( 'has-scroll-overflow-start', position > 1 );
+				wrapper.classList.toggle( 'has-scroll-overflow-end', maxScroll - position > 1 );
 			}
 
 			const observer = new window.ResizeObserver( update );
@@ -34,7 +36,7 @@
 				cleanup: function() {
 					observer.disconnect();
 					wrapper.removeEventListener( 'scroll', update );
-					wrapper.classList.remove( 'has-scroll-overflow' );
+					wrapper.classList.remove( 'has-scroll-overflow-start', 'has-scroll-overflow-end' );
 				}
 			} );
 		}

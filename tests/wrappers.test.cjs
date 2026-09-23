@@ -97,29 +97,48 @@ function flush( window ) {
 	return new Promise( ( resolve ) => window.setTimeout( resolve, 0 ) );
 }
 
+function shadows( wrapper ) {
+	return [
+		wrapper.classList.contains( 'has-scroll-overflow-start' ),
+		wrapper.classList.contains( 'has-scroll-overflow-end' )
+	];
+}
+
 for ( const direction of [ 'ltr', 'rtl' ] ) {
-	test( `tracks remaining columns in ${ direction }, including fractional positions and overscroll`, async () => {
+	test( `tracks hidden columns at both edges in ${ direction }, including fractional positions and overscroll`, async () => {
 		const size = { viewport: 400, table: 1000 };
 		const dom = await start( `<main id="wpbody-content"><div class="wp-list-table-scroll" style="direction: ${ direction }"><table class="wp-list-table widefat"></table></div></main>`, ( document ) => {
 			dimensions( document.querySelector( '.wp-list-table-scroll' ), size );
 		} );
 		const wrapper = dom.window.document.querySelector( '.wp-list-table-scroll' );
 		const sign = direction === 'rtl' ? -1 : 1;
-		const visible = () => wrapper.classList.contains( 'has-scroll-overflow' );
-		assert.equal( visible(), true, 'The start has remaining columns.' );
-		scroll( dom.window, wrapper, sign * 300 );
-		assert.equal( visible(), true, 'The middle has remaining columns.' );
-		scroll( dom.window, wrapper, sign * 599.5 );
-		assert.equal( visible(), false, 'A fractional end position does not leave a shadow.' );
-		scroll( dom.window, wrapper, sign * 600 );
-		assert.equal( visible(), false, 'The end has no remaining columns.' );
-		scroll( dom.window, wrapper, sign * 650 );
-		assert.equal( visible(), false, 'Overscrolling past the end keeps the shadow hidden.' );
-		scroll( dom.window, wrapper, sign * -50 );
-		assert.equal( visible(), true, 'Overscrolling before the start keeps the shadow visible.' );
-		size.table = size.viewport;
-		dom.resizeObservers[ 0 ].notify();
-		assert.equal( visible(), false, 'Start-edge overscroll cannot create overflow on a fitting table.' );
+		assert.deepEqual( shadows( wrapper ), [ false, true ], 'Only the end shadow is visible initially.' );
+		for ( const [ position, expected ] of [
+			[ 0, [ false, true ] ],
+			[ 0.5, [ false, true ] ],
+			[ 1, [ false, true ] ],
+			[ 1.5, [ true, true ] ],
+			[ 300, [ true, true ] ],
+			[ 598.5, [ true, true ] ],
+			[ 599, [ true, false ] ],
+			[ 599.5, [ true, false ] ],
+			[ 600, [ true, false ] ],
+			[ 650, [ true, false ] ],
+			[ -50, [ false, true ] ]
+		] ) {
+			scroll( dom.window, wrapper, sign * position );
+			assert.deepEqual( shadows( wrapper ), expected, `Correct edges at logical position ${ position }.` );
+		}
+		for ( const position of [ 300, -50 ] ) {
+			scroll( dom.window, wrapper, sign * position );
+			size.table = size.viewport;
+			dom.resizeObservers[ 0 ].notify();
+			assert.deepEqual( shadows( wrapper ), [ false, false ], 'A fitting table has no shadows despite a stale scroll offset.' );
+			size.table = size.viewport - 50;
+			dom.resizeObservers[ 0 ].notify();
+			assert.deepEqual( shadows( wrapper ), [ false, false ], 'A narrower table also has no shadows.' );
+			size.table = 1000;
+		}
 		dom.window.close();
 	} );
 }
@@ -134,15 +153,17 @@ test( 'observes both viewport and table sizes as columns fit or overflow', async
 	assert.equal( dom.resizeObservers.length, 1 );
 	const observer = dom.resizeObservers[ 0 ];
 	assert.deepEqual( observer.targets, new Set( [ wrapper, table ] ) );
+	scroll( dom.window, wrapper, 300 );
+	assert.deepEqual( shadows( wrapper ), [ true, true ] );
 	size.viewport = 1000;
 	observer.notify();
-	assert.equal( wrapper.classList.contains( 'has-scroll-overflow' ), false );
+	assert.deepEqual( shadows( wrapper ), [ false, false ] );
 	size.table = 1400;
 	observer.notify();
-	assert.equal( wrapper.classList.contains( 'has-scroll-overflow' ), true );
+	assert.deepEqual( shadows( wrapper ), [ true, true ] );
 	size.table = 800;
 	observer.notify();
-	assert.equal( wrapper.classList.contains( 'has-scroll-overflow' ), false );
+	assert.deepEqual( shadows( wrapper ), [ false, false ] );
 	dom.window.close();
 } );
 
@@ -154,27 +175,30 @@ test( 'cleans up removed AJAX tables and reinitializes tables replaced inside a 
 	const document = dom.window.document;
 	const originalWrapper = document.querySelector( '.wp-list-table-scroll' );
 	const originalObserver = dom.resizeObservers[ 0 ];
-	assert.equal( originalWrapper.classList.contains( 'has-scroll-overflow' ), true );
+	scroll( dom.window, originalWrapper, 300 );
+	assert.deepEqual( shadows( originalWrapper ), [ true, true ] );
 	document.querySelector( 'form' ).innerHTML = '<table class="wp-list-table widefat" id="replacement"></table>';
 	await flush( dom.window );
 	const replacement = document.querySelector( '#replacement' );
 	const wrapper = replacement.parentElement;
 	assert.equal( originalObserver.disconnected, true );
-	assert.equal( originalWrapper.classList.contains( 'has-scroll-overflow' ), false );
+	assert.deepEqual( shadows( originalWrapper ), [ false, false ], 'Cleanup removes both shadow classes.' );
 	scroll( dom.window, originalWrapper, 0 );
-	assert.equal( originalWrapper.classList.contains( 'has-scroll-overflow' ), false, 'The removed wrapper no longer handles scrolling.' );
+	assert.deepEqual( shadows( originalWrapper ), [ false, false ], 'The removed wrapper no longer handles scrolling.' );
 	assert.equal( dom.resizeObservers.length, 2 );
 	const replacementObserver = dom.resizeObservers[ 1 ];
 	assert.deepEqual( replacementObserver.targets, new Set( [ wrapper, replacement ] ) );
 	dimensions( wrapper, size );
 	replacementObserver.notify();
-	assert.equal( wrapper.classList.contains( 'has-scroll-overflow' ), true );
+	assert.deepEqual( shadows( wrapper ), [ false, true ] );
+	scroll( dom.window, wrapper, 300 );
+	assert.deepEqual( shadows( wrapper ), [ true, true ] );
 	wrapper.innerHTML = '<table class="wp-list-table widefat" id="retained-wrapper-table"></table>';
 	await flush( dom.window );
 	assert.equal( replacementObserver.disconnected, true );
 	assert.equal( dom.resizeObservers.length, 3 );
 	assert.deepEqual( dom.resizeObservers[ 2 ].targets, new Set( [ wrapper, document.querySelector( '#retained-wrapper-table' ) ] ) );
-	assert.equal( wrapper.classList.contains( 'has-scroll-overflow' ), true, 'The replacement immediately measures the retained wrapper.' );
+	assert.deepEqual( shadows( wrapper ), [ true, true ], 'The replacement immediately measures both edges of the retained wrapper.' );
 	assert.equal( document.querySelectorAll( '.wp-list-table-scroll' ).length, 1 );
 	dom.window.close();
 } );
@@ -200,7 +224,7 @@ test( 'preserves scrolling wrappers when ResizeObserver is unavailable', async (
 	} );
 	const wrapper = dom.window.document.querySelector( '.wp-list-table-scroll' );
 	assert.ok( wrapper );
-	assert.equal( wrapper.classList.contains( 'has-scroll-overflow' ), false );
+	assert.deepEqual( shadows( wrapper ), [ false, false ] );
 	assert.equal( dom.resizeObservers.length, 0 );
 	dom.window.close();
 } );
