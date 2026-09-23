@@ -63,6 +63,10 @@
 		min-width: 10em;
 	}
 
+	.wp-list-table-scroll > .fixed th.column-comments {
+		min-width: 5.5em;
+	}
+
 	.wp-list-table-scroll > .fixed th.column-date {
 		min-width: 12em;
 	}

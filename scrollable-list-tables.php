@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Scrollable List Tables
  * Description: Try readable desktop admin columns with horizontal table scrolling. The existing mobile layout is preserved.
- * Version: 0.1.0
+ * Version: 0.1.1
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * License: GPL-2.0-or-later
@@ -50,8 +50,8 @@ function scrollable_list_tables_enqueue_assets() {
 	$url    = plugin_dir_url( __FILE__ ) . 'assets/';
 	$label  = $screen->get_screen_reader_text( 'heading_list' );
 
-	wp_enqueue_style( $handle, $url . 'list-tables.css', array( 'list-tables' ), '0.1.0' );
-	wp_enqueue_script( $handle, $url . 'list-tables.js', array(), '0.1.0', true );
+	wp_enqueue_style( $handle, $url . 'list-tables.css', array( 'list-tables' ), '0.1.1' );
+	wp_enqueue_script( $handle, $url . 'list-tables.js', array(), '0.1.1', true );
 	wp_localize_script(
 		$handle,
 		'scrollableListTablesSettings',

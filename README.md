@@ -6,7 +6,7 @@ Legacy admin tables can squeeze titles into very narrow columns when plugins add
 
 ## Install
 
-1. Download **scrollable-list-tables-0.1.0.zip** from the [0.1.0 release](https://github.com/mattmiklic/scrollable-list-tables/releases/tag/v0.1.0).
+1. Download **scrollable-list-tables-0.1.1.zip** from the [0.1.1 release](https://github.com/mattmiklic/scrollable-list-tables/releases/tag/v0.1.1).
 2. In WordPress, go to **Plugins → Add Plugin → Upload Plugin**.
 3. Upload the ZIP, install it, and activate **Scrollable List Tables**.
 
@@ -45,11 +45,13 @@ node --check assets/list-tables.js
 npm run build
 ```
 
-The build writes `dist/scrollable-list-tables-0.1.0.zip`. Only the main PHP file, two assets, WordPress readme, and license enter the ZIP. Development dependencies and tests are not bundled.
+The build writes `dist/scrollable-list-tables-0.1.1.zip`. Only the main PHP file, two assets, WordPress readme, and license enter the ZIP. Development dependencies and tests are not bundled.
 
 The plugin reuses an existing `wp-list-table-scroll` wrapper when running alongside the Core prototype. Deactivating it does not undo a separate Core patch.
 
 ## Validation
+
+Version 0.1.1 was installed from its ZIP on the same test site. Chromium checks confirmed that the Comments icon and sort arrows stay together in both header and footer at 783, 1000, and 1440 pixels, including ascending and descending sorting. At 782 pixels, visible columns, widths, and sampled row heights matched 0.1.0 exactly.
 
 Version 0.1.0 was installed from its ZIP on unmodified WordPress 7.1.2 with PHP 8.4 and Yoast SEO 28.5. Chromium checks covered desktop widths, unchanged mobile measurements, Quick Edit saving, keyboard scrolling, Plugins live-search replacement, public-page asset isolation, and deactivation restoring the original layout.
 

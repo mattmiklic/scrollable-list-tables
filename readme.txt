@@ -3,7 +3,7 @@ Tags: admin, tables, responsive
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.1.0
+Stable tag: 0.1.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,12 +21,12 @@ The plugin targets Core list screens: Posts and custom post types, Pages, Media 
 
 There are no settings, database changes, tracking, or external requests. A small admin script adds a wrapper around the existing table without replacing the table or its event handlers. CSS handles the layout. No Core or other plugin files are changed.
 
-This is a 0.1.0 testing prototype. Plugin compatibility and accessibility feedback are welcome. It is not an official WordPress release.
+This is a 0.1.1 testing prototype. Plugin compatibility and accessibility feedback are welcome. It is not an official WordPress release.
 
 == Installation ==
 
 1. Go to Plugins > Add Plugin > Upload Plugin in WordPress.
-2. Choose scrollable-list-tables-0.1.0.zip, then Install Now.
+2. Choose scrollable-list-tables-0.1.1.zip, then Install Now.
 3. Activate Scrollable List Tables.
 4. Open Posts and narrow the browser to roughly 900-1100 CSS pixels.
 
@@ -58,6 +58,9 @@ No. It keeps the existing list tables, including their plugin columns and normal
 Yes. It reuses an existing wp-list-table-scroll wrapper instead of nesting another. Deactivating the plugin does not undo a separate Core patch.
 
 == Changelog ==
+
+= 0.1.1 =
+* Keep the Comments column icon and sort arrows together in desktop table headers and footers.
 
 = 0.1.0 =
 * Initial testing release with desktop minimum widths, horizontal scrolling, and a viewport border.
