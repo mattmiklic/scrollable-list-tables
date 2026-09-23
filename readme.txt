@@ -3,7 +3,7 @@ Tags: admin, tables, responsive
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.1.2
+Stable tag: 0.1.3
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -15,20 +15,20 @@ This plugin lets people try a proposed improvement to WordPress's existing admin
 
 Above 782 CSS pixels, text columns retain a readable minimum width and the table scrolls horizontally when it no longer fits. The border stays around the scrolling viewport. Filters, bulk actions, and pagination stay outside it. The scrolling region is keyboard focusable; use the arrow keys to scroll.
 
-In browsers that support CSS scroll-driven animations, an edge shadow indicates more columns are available in the scrolling direction. It disappears at the end or when the table fits, and follows the reading direction for right-to-left layouts. This is a progressive enhancement: other browsers retain the same horizontal scrolling without the shadow.
+An edge shadow indicates more columns are available in the reading direction. It disappears at the end or when the table fits, including in right-to-left layouts. Native JavaScript scroll and resize handling controls its visibility; CSS handles its appearance. Browsers without ResizeObserver retain horizontal scrolling without the shadow.
 
 At 782 pixels and below, WordPress keeps its existing mobile layout and expandable row details. There is no truncation or sticky column behavior. Long plugin descriptions may still produce tall rows.
 
 The plugin targets Core list screens: Posts and custom post types, Pages, Media list view, Comments, Users, Categories and Tags, Installed Plugins, and the corresponding network administration tables. Custom plugin administration pages are outside this initial test scope.
 
-There are no settings, database changes, tracking, or external requests. A small admin script adds a wrapper around the existing table without replacing the table or its event handlers. CSS handles the layout. No Core or other plugin files are changed.
+There are no settings, database changes, tracking, or external requests. A small admin script adds a wrapper around the existing table without replacing the table or its event handlers, and updates the shadow when the table scrolls or resizes. CSS handles the layout. No Core or other plugin files are changed.
 
-This is a 0.1.2 testing prototype. Plugin compatibility and accessibility feedback are welcome. It is not an official WordPress release.
+This is a 0.1.3 testing prototype. Plugin compatibility and accessibility feedback are welcome. It is not an official WordPress release.
 
 == Installation ==
 
 1. Go to Plugins > Add Plugin > Upload Plugin in WordPress.
-2. Choose scrollable-list-tables-0.1.2.zip, then Install Now.
+2. Choose scrollable-list-tables-0.1.3.zip, then Install Now.
 3. Activate Scrollable List Tables.
 4. Open Posts and narrow the browser to roughly 900-1100 CSS pixels.
 
@@ -60,6 +60,10 @@ No. It keeps the existing list tables, including their plugin columns and normal
 Yes. It reuses an existing wp-list-table-scroll wrapper instead of nesting another. Deactivating the plugin does not undo a separate Core patch.
 
 == Changelog ==
+
+= 0.1.3 =
+* Control the edge shadow with native JavaScript scroll and resize handling instead of CSS scroll-driven animations.
+* Update shadow tracking when AJAX replaces tables, and release observers and scroll handlers for removed tables.
 
 = 0.1.2 =
 * Add a CSS-only edge shadow when more columns are available to scroll to, in browsers that support scroll-driven animations.
