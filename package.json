@@ -1,0 +1,21 @@
+{
+  "name": "scrollable-list-tables",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A WordPress testing plugin for readable desktop admin columns and horizontal table scrolling.",
+  "license": "GPL-2.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mattmiklic/scrollable-list-tables.git"
+  },
+  "scripts": {
+    "test": "node --test tests/wrappers.test.cjs",
+    "build": "python3 scripts/build.py"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "jsdom": "26.1.0"
+  }
+}
