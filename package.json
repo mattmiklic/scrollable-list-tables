@@ -1,6 +1,6 @@
 {
   "name": "scrollable-list-tables",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "A WordPress testing plugin for readable desktop admin columns and horizontal table scrolling.",
   "license": "GPL-2.0-or-later",

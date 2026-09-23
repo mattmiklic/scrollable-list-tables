@@ -6,7 +6,7 @@ Legacy admin tables can squeeze titles into very narrow columns when plugins add
 
 ## Install
 
-1. Download **scrollable-list-tables-0.1.1.zip** from the [0.1.1 release](https://github.com/mattmiklic/scrollable-list-tables/releases/tag/v0.1.1).
+1. Download **scrollable-list-tables-0.1.2.zip** from the [0.1.2 release](https://github.com/mattmiklic/scrollable-list-tables/releases/tag/v0.1.2).
 2. In WordPress, go to **Plugins → Add Plugin → Upload Plugin**.
 3. Upload the ZIP, install it, and activate **Scrollable List Tables**.
 
@@ -16,8 +16,11 @@ There are no settings. Deactivate the plugin and reload the page to compare the 
 
 - Above 782 CSS pixels, Core text columns have minimum widths and the table scrolls horizontally when needed.
 - The outer border stays around the scrolling viewport. Filters, bulk actions, and pagination stay outside it.
+- In supporting browsers, an edge shadow indicates more columns are available in the scrolling direction. It disappears at the end or when the table fits, including in right-to-left layouts.
 - The table region supports keyboard scrolling with the arrow keys.
 - WordPress keeps its existing mobile layout and expandable row details at 782 pixels and below.
+
+The shadow is a progressive enhancement using CSS scroll-driven animations. Browsers without support retain the same horizontal scrolling without the shadow.
 
 The plugin targets Core list screens, including Posts and custom post types, Pages, Media list view, Comments, Users, Categories and Tags, Installed Plugins, and corresponding network tables. Custom plugin administration pages are outside this initial scope.
 
@@ -45,11 +48,13 @@ node --check assets/list-tables.js
 npm run build
 ```
 
-The build writes `dist/scrollable-list-tables-0.1.1.zip`. Only the main PHP file, two assets, WordPress readme, and license enter the ZIP. Development dependencies and tests are not bundled.
+The build writes `dist/scrollable-list-tables-0.1.2.zip`. Only the main PHP file, two assets, WordPress readme, and license enter the ZIP. Development dependencies and tests are not bundled.
 
 The plugin reuses an existing `wp-list-table-scroll` wrapper when running alongside the Core prototype. Deactivating it does not undo a separate Core patch.
 
 ## Validation
+
+Version 0.1.2 shares the shadow CSS with the Core prototype. Chromium checks on Core covered desktop Posts, a fitting Users table, and unchanged mobile layout. A fixture using the generated Core RTL stylesheet covered right-to-left scrolling at the start, middle, and end, plus resizing between fitting and overflowing tables. Browser checks of the packaged plugin and Safari/Firefox coverage remain pending.
 
 Version 0.1.1 was installed from its ZIP on the same test site. Chromium checks confirmed that the Comments icon and sort arrows stay together in both header and footer at 783, 1000, and 1440 pixels, including ascending and descending sorting. At 782 pixels, visible columns, widths, and sampled row heights matched 0.1.0 exactly.
 
