@@ -7,8 +7,9 @@ const { JSDOM } = require( 'jsdom' );
 const script = readFileSync( join( __dirname, '../assets/list-tables.js' ), 'utf8' );
 
 async function start( markup, prepare = () => {} ) {
-	const dom = new JSDOM( markup, { runScripts: 'outside-only' } );
-	dom.window.scrollableListTablesSettings = { label: 'Posts & pages' };
+	const dom = new JSDOM( markup, { runScripts: 'outside-only', pretendToBeVisual: true } );
+	dom.window.scrollableListTablesSettings = { label: 'Posts & pages', previous: 'Scroll to previous columns', next: 'Scroll to next columns' };
+	dom.window.matchMedia = () => ( { matches: false } );
 	dom.resizeObservers = [];
 	dom.window.ResizeObserver = class {
 		constructor( callback ) {
@@ -81,6 +82,15 @@ test( 'restores the wrapper after Plugins live search replaces its table', async
 	dom.window.close();
 } );
 
+async function startTable( size, direction = 'ltr' ) {
+	const dom = await start( '<main id="wpbody-content"><form><table class="wp-list-table widefat"><tbody></tbody></table></form></main>' );
+	const wrapper = dom.window.document.querySelector( '.wp-list-table-scroll' );
+	wrapper.style.direction = direction;
+	dimensions( wrapper, size );
+	dom.resizeObservers[ 0 ].notify();
+	return dom;
+}
+
 function dimensions( wrapper, size ) {
 	Object.defineProperties( wrapper, {
 		clientWidth: { configurable: true, get: () => size.viewport },
@@ -97,7 +107,7 @@ function flush( window ) {
 	return new Promise( ( resolve ) => window.setTimeout( resolve, 0 ) );
 }
 
-function shadows( wrapper ) {
+function overflowEdges( wrapper ) {
 	return [
 		wrapper.classList.contains( 'has-scroll-overflow-start' ),
 		wrapper.classList.contains( 'has-scroll-overflow-end' )
@@ -107,12 +117,10 @@ function shadows( wrapper ) {
 for ( const direction of [ 'ltr', 'rtl' ] ) {
 	test( `tracks hidden columns at both edges in ${ direction }, including fractional positions and overscroll`, async () => {
 		const size = { viewport: 400, table: 1000 };
-		const dom = await start( `<main id="wpbody-content"><div class="wp-list-table-scroll" style="direction: ${ direction }"><table class="wp-list-table widefat"></table></div></main>`, ( document ) => {
-			dimensions( document.querySelector( '.wp-list-table-scroll' ), size );
-		} );
+		const dom = await startTable( size, direction );
 		const wrapper = dom.window.document.querySelector( '.wp-list-table-scroll' );
 		const sign = direction === 'rtl' ? -1 : 1;
-		assert.deepEqual( shadows( wrapper ), [ false, true ], 'Only the end shadow is visible initially.' );
+		assert.deepEqual( overflowEdges( wrapper ), [ false, true ], 'Only the end edge is active initially.' );
 		for ( const [ position, expected ] of [
 			[ 0, [ false, true ] ],
 			[ 0.5, [ false, true ] ],
@@ -127,16 +135,16 @@ for ( const direction of [ 'ltr', 'rtl' ] ) {
 			[ -50, [ false, true ] ]
 		] ) {
 			scroll( dom.window, wrapper, sign * position );
-			assert.deepEqual( shadows( wrapper ), expected, `Correct edges at logical position ${ position }.` );
+			assert.deepEqual( overflowEdges( wrapper ), expected, `Correct edges at logical position ${ position }.` );
 		}
 		for ( const position of [ 300, -50 ] ) {
 			scroll( dom.window, wrapper, sign * position );
 			size.table = size.viewport;
 			dom.resizeObservers[ 0 ].notify();
-			assert.deepEqual( shadows( wrapper ), [ false, false ], 'A fitting table has no shadows despite a stale scroll offset.' );
+			assert.deepEqual( overflowEdges( wrapper ), [ false, false ], 'A fitting table has no active edges despite a stale scroll offset.' );
 			size.table = size.viewport - 50;
 			dom.resizeObservers[ 0 ].notify();
-			assert.deepEqual( shadows( wrapper ), [ false, false ], 'A narrower table also has no shadows.' );
+			assert.deepEqual( overflowEdges( wrapper ), [ false, false ], 'A narrower table also has no active edges.' );
 			size.table = 1000;
 		}
 		dom.window.close();
@@ -145,66 +153,63 @@ for ( const direction of [ 'ltr', 'rtl' ] ) {
 
 test( 'observes both viewport and table sizes as columns fit or overflow', async () => {
 	const size = { viewport: 400, table: 1000 };
-	const dom = await start( '<main id="wpbody-content"><div class="wp-list-table-scroll"><table class="wp-list-table widefat"></table></div></main>', ( document ) => {
-		dimensions( document.querySelector( '.wp-list-table-scroll' ), size );
-	} );
+	const dom = await startTable( size );
 	const wrapper = dom.window.document.querySelector( '.wp-list-table-scroll' );
 	const table = wrapper.querySelector( 'table' );
 	assert.equal( dom.resizeObservers.length, 1 );
 	const observer = dom.resizeObservers[ 0 ];
 	assert.deepEqual( observer.targets, new Set( [ wrapper, table ] ) );
 	scroll( dom.window, wrapper, 300 );
-	assert.deepEqual( shadows( wrapper ), [ true, true ] );
+	assert.deepEqual( overflowEdges( wrapper ), [ true, true ] );
 	size.viewport = 1000;
 	observer.notify();
-	assert.deepEqual( shadows( wrapper ), [ false, false ] );
+	assert.deepEqual( overflowEdges( wrapper ), [ false, false ] );
 	size.table = 1400;
 	observer.notify();
-	assert.deepEqual( shadows( wrapper ), [ true, true ] );
+	assert.deepEqual( overflowEdges( wrapper ), [ true, true ] );
 	size.table = 800;
 	observer.notify();
-	assert.deepEqual( shadows( wrapper ), [ false, false ] );
+	assert.deepEqual( overflowEdges( wrapper ), [ false, false ] );
 	dom.window.close();
 } );
 
 test( 'cleans up removed AJAX tables and reinitializes tables replaced inside a retained wrapper', async () => {
 	const size = { viewport: 400, table: 1000 };
-	const dom = await start( '<main id="wpbody-content"><form><div class="wp-list-table-scroll"><table class="wp-list-table widefat"></table></div></form></main>', ( document ) => {
-		dimensions( document.querySelector( '.wp-list-table-scroll' ), size );
-	} );
+	const dom = await startTable( size );
 	const document = dom.window.document;
 	const originalWrapper = document.querySelector( '.wp-list-table-scroll' );
 	const originalObserver = dom.resizeObservers[ 0 ];
 	scroll( dom.window, originalWrapper, 300 );
-	assert.deepEqual( shadows( originalWrapper ), [ true, true ] );
+	assert.deepEqual( overflowEdges( originalWrapper ), [ true, true ] );
 	document.querySelector( 'form' ).innerHTML = '<table class="wp-list-table widefat" id="replacement"></table>';
 	await flush( dom.window );
 	const replacement = document.querySelector( '#replacement' );
 	const wrapper = replacement.parentElement;
 	assert.equal( originalObserver.disconnected, true );
-	assert.deepEqual( shadows( originalWrapper ), [ false, false ], 'Cleanup removes both shadow classes.' );
+	assert.equal( originalWrapper.querySelectorAll( '.wp-list-table-scroll-edge' ).length, 0 );
+	assert.deepEqual( overflowEdges( originalWrapper ), [ false, false ], 'Cleanup removes both overflow classes.' );
 	scroll( dom.window, originalWrapper, 0 );
-	assert.deepEqual( shadows( originalWrapper ), [ false, false ], 'The removed wrapper no longer handles scrolling.' );
+	assert.deepEqual( overflowEdges( originalWrapper ), [ false, false ], 'The removed wrapper no longer handles scrolling.' );
 	assert.equal( dom.resizeObservers.length, 2 );
 	const replacementObserver = dom.resizeObservers[ 1 ];
 	assert.deepEqual( replacementObserver.targets, new Set( [ wrapper, replacement ] ) );
 	dimensions( wrapper, size );
 	replacementObserver.notify();
-	assert.deepEqual( shadows( wrapper ), [ false, true ] );
+	assert.deepEqual( overflowEdges( wrapper ), [ false, true ] );
 	scroll( dom.window, wrapper, 300 );
-	assert.deepEqual( shadows( wrapper ), [ true, true ] );
+	assert.deepEqual( overflowEdges( wrapper ), [ true, true ] );
 	wrapper.innerHTML = '<table class="wp-list-table widefat" id="retained-wrapper-table"></table>';
 	await flush( dom.window );
 	assert.equal( replacementObserver.disconnected, true );
 	assert.equal( dom.resizeObservers.length, 3 );
 	assert.deepEqual( dom.resizeObservers[ 2 ].targets, new Set( [ wrapper, document.querySelector( '#retained-wrapper-table' ) ] ) );
-	assert.deepEqual( shadows( wrapper ), [ true, true ], 'The replacement immediately measures both edges of the retained wrapper.' );
+	assert.deepEqual( overflowEdges( wrapper ), [ true, true ], 'The replacement immediately measures both edges of the retained wrapper.' );
 	assert.equal( document.querySelectorAll( '.wp-list-table-scroll' ).length, 1 );
 	dom.window.close();
 } );
 
-test( 'avoids duplicate observers on unrelated mutations and reuses existing Core wrappers', async () => {
-	const dom = await start( '<main id="wpbody-content"><div class="wp-list-table-scroll"><table class="wp-list-table widefat"><tbody></tbody></table></div></main>' );
+test( 'avoids duplicate controls and observers on unrelated mutations', async () => {
+	const dom = await startTable( { viewport: 400, table: 1000 } );
 	const document = dom.window.document;
 	assert.equal( dom.resizeObservers.length, 1 );
 	const wrapper = document.querySelector( '.wp-list-table-scroll' );
@@ -215,6 +220,7 @@ test( 'avoids duplicate observers on unrelated mutations and reuses existing Cor
 	assert.equal( dom.resizeObservers[ 0 ].disconnected, false );
 	assert.equal( document.querySelectorAll( '.wp-list-table-scroll' ).length, 1 );
 	assert.equal( document.querySelector( 'table' ).parentElement, wrapper );
+	assert.equal( wrapper.querySelectorAll( '.wp-list-table-scroll-edge' ).length, 2 );
 	dom.window.close();
 } );
 
@@ -224,7 +230,61 @@ test( 'preserves scrolling wrappers when ResizeObserver is unavailable', async (
 	} );
 	const wrapper = dom.window.document.querySelector( '.wp-list-table-scroll' );
 	assert.ok( wrapper );
-	assert.deepEqual( shadows( wrapper ), [ false, false ] );
+	assert.deepEqual( overflowEdges( wrapper ), [ false, false ] );
+	assert.equal( dom.resizeObservers.length, 0 );
+	dom.window.close();
+} );
+
+for ( const direction of [ 'ltr', 'rtl' ] ) {
+	test( `native controls page in ${ direction } and respect reduced motion`, async () => {
+		const dom = await startTable( { viewport: 400, table: 1000 }, direction );
+		const wrapper = dom.window.document.querySelector( '.wp-list-table-scroll' );
+		const buttons = wrapper.querySelectorAll( '.wp-list-table-scroll-edge button' );
+		const calls = [];
+		wrapper.scrollBy = ( options ) => calls.push( [ options.left, options.behavior ] );
+		const sign = direction === 'rtl' ? -1 : 1;
+		assert.equal( buttons.length, 2 );
+		assert.equal( buttons[ 0 ].type, 'button' );
+		assert.equal( buttons[ 1 ].type, 'button' );
+		assert.equal( buttons[ 0 ].getAttribute( 'aria-label' ), 'Scroll to previous columns' );
+		assert.equal( buttons[ 1 ].getAttribute( 'aria-label' ), 'Scroll to next columns' );
+		assert.equal( buttons[ 1 ].firstElementChild.getAttribute( 'aria-hidden' ), 'true' );
+		buttons[ 1 ].click();
+		buttons[ 0 ].click();
+		dom.window.matchMedia = () => ( { matches: true } );
+		buttons[ 1 ].click();
+		assert.deepEqual( calls, [ [ sign * 336, 'smooth' ], [ -sign * 336, 'smooth' ], [ sign * 336, 'instant' ] ] );
+		dom.window.close();
+	} );
+}
+
+test( 'returns focus to the region when the focused control reaches its boundary', async () => {
+	const dom = await startTable( { viewport: 400, table: 1000 } );
+	const document = dom.window.document;
+	const wrapper = document.querySelector( '.wp-list-table-scroll' );
+	const previous = wrapper.querySelector( '.wp-list-table-scroll-edge-start button' );
+	const next = wrapper.querySelector( '.wp-list-table-scroll-edge-end button' );
+	next.focus();
+	assert.equal( document.activeElement, next );
+	scroll( dom.window, wrapper, 600 );
+	assert.equal( document.activeElement, wrapper );
+	previous.focus();
+	scroll( dom.window, wrapper, 0 );
+	assert.equal( document.activeElement, wrapper );
+	dom.window.close();
+} );
+
+test( 'leaves Core wrappers alone before and after Core initializes its controls', async () => {
+	const dom = await start( '<main id="wpbody-content"><div class="wp-list-table-scroll"><table class="wp-list-table widefat"></table></div></main>' );
+	const document = dom.window.document;
+	const wrapper = document.querySelector( '.wp-list-table-scroll' );
+	assert.equal( dom.resizeObservers.length, 0 );
+	assert.equal( wrapper.querySelectorAll( 'button' ).length, 0 );
+	const coreControl = document.createElement( 'div' );
+	coreControl.className = 'wp-list-table-scroll-edge';
+	wrapper.append( coreControl );
+	await flush( dom.window );
+	assert.equal( wrapper.querySelectorAll( '.wp-list-table-scroll-edge' ).length, 1 );
 	assert.equal( dom.resizeObservers.length, 0 );
 	dom.window.close();
 } );
