@@ -3,7 +3,7 @@ Tags: admin, tables, responsive
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.1.6
+Stable tag: 0.1.7
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -15,20 +15,20 @@ This plugin lets people try a proposed improvement to WordPress's existing admin
 
 Above 782 CSS pixels, text columns retain a readable minimum width and the table scrolls horizontally when it no longer fits. The border stays around the scrolling viewport. Filters, bulk actions, and pagination stay outside it. The scrolling region is keyboard focusable; use the arrow keys to scroll.
 
-Clickable bars indicate hidden columns on either side. Click anywhere on a bar to scroll approximately one viewport, with a small overlap. The chevron stays centered in the visible part of the table. Tab to a bar and use Enter or Space to activate it. Each bar disappears at its edge, returning focus to the table if needed. These controls support right-to-left layouts and reduced-motion preferences. Browsers without ResizeObserver retain horizontal scrolling without the bars.
+A 32-pixel fade to white indicates hidden columns at either edge. Each fade disappears when that edge is reached. The fades support right-to-left layouts and do not intercept clicks or add keyboard stops. Browsers without ResizeObserver retain horizontal scrolling without the fades.
 
 At 782 pixels and below, WordPress keeps its existing mobile layout and expandable row details. There is no truncation or sticky column behavior. Long plugin descriptions may still produce tall rows. Formatted code and fixed-width widgets can widen a column across all rows and make the whole table scroll. There is no maximum column width.
 
 The plugin targets Core list screens: Posts and custom post types, Pages, Media list view, Comments, Users, Categories and Tags, Installed Plugins, and the corresponding network administration tables. Custom plugin administration pages are outside this initial test scope.
 
-There are no settings, database changes, tracking, or external requests. A small admin script adds a wrapper around the existing table without replacing the table or its event handlers, and updates the controls when the table scrolls or resizes. CSS handles the layout. No Core or other plugin files are changed.
+There are no settings, database changes, tracking, or external requests. A small admin script adds a wrapper around the existing table without replacing the table or its event handlers, and updates the fades when the table scrolls or resizes. CSS handles the layout. No Core or other plugin files are changed.
 
-This is a 0.1.6 testing prototype. Plugin compatibility and accessibility feedback are welcome. It is not an official WordPress release.
+This is a testing prototype. Plugin compatibility and accessibility feedback are welcome. It is not an official WordPress release.
 
 == Installation ==
 
 1. Go to Plugins > Add Plugin > Upload Plugin in WordPress.
-2. Choose scrollable-list-tables-0.1.6.zip, then Install Now.
+2. Choose scrollable-list-tables-0.1.7.zip, then Install Now.
 3. Activate Scrollable List Tables.
 4. Open Posts and narrow the browser to roughly 900-1100 CSS pixels.
 
@@ -57,9 +57,13 @@ No. It keeps the existing list tables, including their plugin columns and normal
 
 = Can I run it on the Core prototype branch? =
 
-Yes. It leaves existing wp-list-table-scroll wrappers and their controls to the current Core prototype instead of adding duplicate controls. Deactivating the plugin does not undo a separate Core patch.
+Yes. It leaves existing wp-list-table-scroll wrappers and their overflow tracking to the current Core prototype. Deactivating the plugin does not undo a separate Core patch.
 
 == Changelog ==
+
+= 0.1.7 =
+* Restore passive 32-pixel edge fades and remove clickable bars and chevrons.
+* Keep wrapper ownership, overflow tracking, and cleanup after AJAX replacements.
 
 = 0.1.6 =
 * Replace edge shadows with clickable full-height scroll bars and chevrons centered in the visible table area.

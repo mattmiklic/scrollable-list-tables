@@ -7,9 +7,8 @@ const { JSDOM } = require( 'jsdom' );
 const script = readFileSync( join( __dirname, '../assets/list-tables.js' ), 'utf8' );
 
 async function start( markup, prepare = () => {} ) {
-	const dom = new JSDOM( markup, { runScripts: 'outside-only', pretendToBeVisual: true } );
-	dom.window.scrollableListTablesSettings = { label: 'Posts & pages', previous: 'Scroll to previous columns', next: 'Scroll to next columns' };
-	dom.window.matchMedia = () => ( { matches: false } );
+	const dom = new JSDOM( markup, { runScripts: 'outside-only' } );
+	dom.window.scrollableListTablesSettings = { label: 'Posts & pages' };
 	dom.resizeObservers = [];
 	dom.window.ResizeObserver = class {
 		constructor( callback ) {
@@ -52,6 +51,7 @@ test( 'preserves the table, its handlers, and surrounding controls', async () =>
 	const wrapper = document.querySelector( '.wp-list-table-scroll' );
 	assert.ok( wrapper, 'The existing table receives a scroll wrapper.' );
 	assert.equal( wrapper.firstElementChild, originalTable );
+	assert.equal( wrapper.children.length, 1, 'Passive fades add no controls beside the table.' );
 	assert.equal( wrapper.getAttribute( 'role' ), 'region' );
 	assert.equal( wrapper.getAttribute( 'aria-label' ), 'Posts & pages' );
 	assert.equal( wrapper.tabIndex, 0 );
@@ -186,7 +186,6 @@ test( 'cleans up removed AJAX tables and reinitializes tables replaced inside a 
 	const replacement = document.querySelector( '#replacement' );
 	const wrapper = replacement.parentElement;
 	assert.equal( originalObserver.disconnected, true );
-	assert.equal( originalWrapper.querySelectorAll( '.wp-list-table-scroll-edge' ).length, 0 );
 	assert.deepEqual( overflowEdges( originalWrapper ), [ false, false ], 'Cleanup removes both overflow classes.' );
 	scroll( dom.window, originalWrapper, 0 );
 	assert.deepEqual( overflowEdges( originalWrapper ), [ false, false ], 'The removed wrapper no longer handles scrolling.' );
@@ -208,7 +207,7 @@ test( 'cleans up removed AJAX tables and reinitializes tables replaced inside a 
 	dom.window.close();
 } );
 
-test( 'avoids duplicate controls and observers on unrelated mutations', async () => {
+test( 'avoids duplicate wrappers and observers on unrelated mutations', async () => {
 	const dom = await startTable( { viewport: 400, table: 1000 } );
 	const document = dom.window.document;
 	assert.equal( dom.resizeObservers.length, 1 );
@@ -220,7 +219,6 @@ test( 'avoids duplicate controls and observers on unrelated mutations', async ()
 	assert.equal( dom.resizeObservers[ 0 ].disconnected, false );
 	assert.equal( document.querySelectorAll( '.wp-list-table-scroll' ).length, 1 );
 	assert.equal( document.querySelector( 'table' ).parentElement, wrapper );
-	assert.equal( wrapper.querySelectorAll( '.wp-list-table-scroll-edge' ).length, 2 );
 	dom.window.close();
 } );
 
@@ -235,56 +233,16 @@ test( 'preserves scrolling wrappers when ResizeObserver is unavailable', async (
 	dom.window.close();
 } );
 
-for ( const direction of [ 'ltr', 'rtl' ] ) {
-	test( `native controls page in ${ direction } and respect reduced motion`, async () => {
-		const dom = await startTable( { viewport: 400, table: 1000 }, direction );
-		const wrapper = dom.window.document.querySelector( '.wp-list-table-scroll' );
-		const buttons = wrapper.querySelectorAll( '.wp-list-table-scroll-edge button' );
-		const calls = [];
-		wrapper.scrollBy = ( options ) => calls.push( [ options.left, options.behavior ] );
-		const sign = direction === 'rtl' ? -1 : 1;
-		assert.equal( buttons.length, 2 );
-		assert.equal( buttons[ 0 ].type, 'button' );
-		assert.equal( buttons[ 1 ].type, 'button' );
-		assert.equal( buttons[ 0 ].getAttribute( 'aria-label' ), 'Scroll to previous columns' );
-		assert.equal( buttons[ 1 ].getAttribute( 'aria-label' ), 'Scroll to next columns' );
-		assert.equal( buttons[ 1 ].firstElementChild.getAttribute( 'aria-hidden' ), 'true' );
-		buttons[ 1 ].click();
-		buttons[ 0 ].click();
-		dom.window.matchMedia = () => ( { matches: true } );
-		buttons[ 1 ].click();
-		assert.deepEqual( calls, [ [ sign * 336, 'smooth' ], [ -sign * 336, 'smooth' ], [ sign * 336, 'instant' ] ] );
-		dom.window.close();
-	} );
-}
-
-test( 'returns focus to the region when the focused control reaches its boundary', async () => {
-	const dom = await startTable( { viewport: 400, table: 1000 } );
-	const document = dom.window.document;
-	const wrapper = document.querySelector( '.wp-list-table-scroll' );
-	const previous = wrapper.querySelector( '.wp-list-table-scroll-edge-start button' );
-	const next = wrapper.querySelector( '.wp-list-table-scroll-edge-end button' );
-	next.focus();
-	assert.equal( document.activeElement, next );
-	scroll( dom.window, wrapper, 600 );
-	assert.equal( document.activeElement, wrapper );
-	previous.focus();
-	scroll( dom.window, wrapper, 0 );
-	assert.equal( document.activeElement, wrapper );
-	dom.window.close();
-} );
-
-test( 'leaves Core wrappers alone before and after Core initializes its controls', async () => {
-	const dom = await start( '<main id="wpbody-content"><div class="wp-list-table-scroll"><table class="wp-list-table widefat"></table></div></main>' );
+test( 'leaves Core wrappers and their overflow state to Core', async () => {
+	const dom = await start( '<main id="wpbody-content"><div class="wp-list-table-scroll has-scroll-overflow-end"><table class="wp-list-table widefat"><tbody></tbody></table></div></main>' );
 	const document = dom.window.document;
 	const wrapper = document.querySelector( '.wp-list-table-scroll' );
 	assert.equal( dom.resizeObservers.length, 0 );
-	assert.equal( wrapper.querySelectorAll( 'button' ).length, 0 );
-	const coreControl = document.createElement( 'div' );
-	coreControl.className = 'wp-list-table-scroll-edge';
-	wrapper.append( coreControl );
+	assert.deepEqual( overflowEdges( wrapper ), [ false, true ] );
+	document.querySelector( 'tbody' ).innerHTML = '<tr><td>Updated content</td></tr>';
 	await flush( dom.window );
-	assert.equal( wrapper.querySelectorAll( '.wp-list-table-scroll-edge' ).length, 1 );
+	assert.equal( wrapper.children.length, 1 );
 	assert.equal( dom.resizeObservers.length, 0 );
+	assert.deepEqual( overflowEdges( wrapper ), [ false, true ], 'The plugin preserves Core overflow state after mutations.' );
 	dom.window.close();
 } );

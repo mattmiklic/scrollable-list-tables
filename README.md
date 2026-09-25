@@ -6,7 +6,7 @@ Legacy admin tables can squeeze titles into very narrow columns when plugins add
 
 ## Install
 
-1. Download **scrollable-list-tables-0.1.6.zip** from the [0.1.6 release](https://github.com/mattmiklic/scrollable-list-tables/releases/tag/v0.1.6).
+1. Download **scrollable-list-tables-0.1.7.zip** from the [0.1.7 release](https://github.com/mattmiklic/scrollable-list-tables/releases/tag/v0.1.7).
 2. In WordPress, go to **Plugins → Add Plugin → Upload Plugin**.
 3. Upload the ZIP, install it, and activate **Scrollable List Tables**.
 
@@ -16,12 +16,12 @@ There are no settings. Deactivate the plugin and reload the page to compare the 
 
 - Above 782 CSS pixels, Core text columns have minimum widths and the table scrolls horizontally when needed.
 - The outer border stays around the scrolling viewport. Filters, bulk actions, and pagination stay outside it.
-- Clickable bars indicate hidden columns on either side. Click anywhere on a bar to move approximately one viewport, with a small overlap. Its chevron stays centered in the visible part of the table. Each bar disappears at its edge, including in right-to-left layouts.
+- A 32-pixel fade to white indicates hidden columns at either edge. Each fade disappears when that edge is reached, including in right-to-left layouts. The fades do not intercept clicks or add keyboard stops.
 - Desktop tables suppress horizontal rubber-band overscroll where supported.
-- The table region supports keyboard scrolling with the arrow keys. Tab to a scroll bar and use Enter or Space to activate it. Focus returns to the table region when the focused bar disappears. Reduced-motion preferences disable scroll animation.
+- The table region supports keyboard scrolling with the arrow keys.
 - WordPress keeps its existing mobile layout and expandable row details at 782 pixels and below.
 
-Native JavaScript scroll and resize handling controls bar visibility and chevron position. CSS handles their appearance. Browsers without `ResizeObserver` retain horizontal scrolling without the bars. Overscroll containment also prevents browser back/forward gestures where supported; Safari may still allow navigation gestures.
+Native JavaScript scroll and resize handling controls fade visibility. CSS handles their appearance. Browsers without `ResizeObserver` retain horizontal scrolling without the fades. Overscroll containment also prevents browser back/forward gestures where supported; Safari may still allow navigation gestures.
 
 The plugin targets Core list screens, including Posts and custom post types, Pages, Media list view, Comments, Users, Categories and Tags, Installed Plugins, and corresponding network tables. Custom plugin administration pages are outside this initial scope.
 
@@ -49,13 +49,15 @@ node --check assets/list-tables.js
 npm run build
 ```
 
-The build writes `dist/scrollable-list-tables-0.1.6.zip`. Only the main PHP file, two assets, WordPress readme, and license enter the ZIP. Development dependencies and tests are not bundled.
+The build writes `dist/scrollable-list-tables-0.1.7.zip`. Only the main PHP file, two assets, WordPress readme, and license enter the ZIP. Development dependencies and tests are not bundled.
 
-When running alongside the current Core prototype, the plugin leaves existing `wp-list-table-scroll` wrappers and their controls to Core. Deactivating it does not undo a separate Core patch.
+When running alongside the current Core prototype, the plugin leaves existing `wp-list-table-scroll` wrappers and their overflow tracking to Core. Deactivating it does not undo a separate Core patch.
 
 ## Validation
 
-Version 0.1.6 passes 13 DOM regression tests and PHP/JavaScript syntax checks. Coverage includes directional scrolling, reduced motion, focus return, control cleanup, AJAX replacements, and coexistence with Core wrappers. The CSS and scroll-control logic match the Core prototype, with plugin-specific wrapping, translated labels, and a fallback focus color. Browser and assistive-technology coverage remains limited; the DOM tests do not verify visual layout.
+Version 0.1.7 restores passive 32-pixel fades and removes the clickable bars. It passes 10 DOM regression tests covering wrapper preservation, RTL overflow, fractional boundaries, resize handling, observer cleanup, AJAX replacements, and coexistence with Core wrappers. The DOM tests do not verify the visual fade treatment. Core prototype browser checks cover the fades at both edges, keyboard scrolling, fitting tables, and the unchanged mobile layout. Broader browser and assistive-technology testing remains outstanding.
+
+Released version 0.1.6 passed 13 DOM regression tests and PHP/JavaScript syntax checks. Coverage included directional scrolling, reduced motion, focus return, control cleanup, AJAX replacements, and coexistence with Core wrappers. The CSS and scroll-control logic matched the Core prototype at that time, with plugin-specific wrapping, translated labels, and a fallback focus color. Browser and assistive-technology coverage was limited; the DOM tests did not verify visual layout.
 
 Version 0.1.5 uses WordPress's RTL page class for shadow direction. All nine DOM regression tests and PHP syntax checks pass. Source review confirms the Core and plugin shadow rules match and the generated Core RTL styles mirror the shadows once. Browser checks remain pending.
 
