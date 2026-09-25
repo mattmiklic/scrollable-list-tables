@@ -3,7 +3,7 @@ Tags: admin, tables, responsive
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.1.7
+Stable tag: 0.1.8
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -28,7 +28,7 @@ This is a testing prototype. Plugin compatibility and accessibility feedback are
 == Installation ==
 
 1. Go to Plugins > Add Plugin > Upload Plugin in WordPress.
-2. Choose scrollable-list-tables-0.1.7.zip, then Install Now.
+2. Choose scrollable-list-tables-0.1.8.zip, then Install Now.
 3. Activate Scrollable List Tables.
 4. Open Posts and narrow the browser to roughly 900-1100 CSS pixels.
 
@@ -60,6 +60,9 @@ No. It keeps the existing list tables, including their plugin columns and normal
 Yes. It leaves existing wp-list-table-scroll wrappers and their overflow tracking to the current Core prototype. Deactivating the plugin does not undo a separate Core patch.
 
 == Changelog ==
+
+= 0.1.8 =
+* Keep the scrolling region's keyboard focus outline visible at mobile widths.
 
 = 0.1.7 =
 * Restore passive 32-pixel edge fades and remove clickable bars and chevrons.

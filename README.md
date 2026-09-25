@@ -6,7 +6,7 @@ Legacy admin tables can squeeze titles into very narrow columns when plugins add
 
 ## Install
 
-1. Download **scrollable-list-tables-0.1.7.zip** from the [0.1.7 release](https://github.com/mattmiklic/scrollable-list-tables/releases/tag/v0.1.7).
+1. Download **scrollable-list-tables-0.1.8.zip** from the [0.1.8 release](https://github.com/mattmiklic/scrollable-list-tables/releases/tag/v0.1.8).
 2. In WordPress, go to **Plugins → Add Plugin → Upload Plugin**.
 3. Upload the ZIP, install it, and activate **Scrollable List Tables**.
 
@@ -49,11 +49,13 @@ node --check assets/list-tables.js
 npm run build
 ```
 
-The build writes `dist/scrollable-list-tables-0.1.7.zip`. Only the main PHP file, two assets, WordPress readme, and license enter the ZIP. Development dependencies and tests are not bundled.
+The build writes `dist/scrollable-list-tables-0.1.8.zip`. Only the main PHP file, two assets, WordPress readme, and license enter the ZIP. Development dependencies and tests are not bundled.
 
 When running alongside the current Core prototype, the plugin leaves existing `wp-list-table-scroll` wrappers and their overflow tracking to Core. Deactivating it does not undo a separate Core patch.
 
 ## Validation
+
+Version 0.1.8 keeps the scrolling region's keyboard focus outline visible at mobile widths. Chromium checks at 390, 782, 783, and 1400 pixels confirm visible focus with no layout changes.
 
 Version 0.1.7 restores passive 32-pixel fades and removes the clickable bars. It passes 10 DOM regression tests covering wrapper preservation, RTL overflow, fractional boundaries, resize handling, observer cleanup, AJAX replacements, and coexistence with Core wrappers. The DOM tests do not verify the visual fade treatment. Core prototype browser checks cover the fades at both edges, keyboard scrolling, fitting tables, and the unchanged mobile layout. Broader browser and assistive-technology testing remains outstanding.
 
